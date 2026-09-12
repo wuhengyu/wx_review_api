@@ -1,0 +1,22 @@
+{
+  "name": "wx-review-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WeChat Mini Program review-mode API, deployed on Vercel",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "vercel",
+    "serverless",
+    "wechat",
+    "miniprogram",
+    "api"
+  ],
+  "license": "MIT"
+}
