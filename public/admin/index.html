@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>接口开关控制台</title>
+  <style>
+    :root {
+      --bg: #eef2f5;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #07c160;
+      --primary-dark: #059d4d;
+      --danger: #ef4444;
+      --warn: #d97706;
+      --warn-bg: #fffbeb;
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background: radial-gradient(900px 500px at 50% -120px, #d5f5e3 0%, var(--bg) 60%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 24px 50px -24px rgba(15, 23, 42, 0.35);
+      padding: 26px 24px 22px;
+    }
+
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      flex: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), #43d17f);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .sub {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .inputRow {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="password"] {
+      flex: 1;
+      min-width: 0;
+      height: 42px;
+      padding: 0 14px;
+      font-size: 14px;
+      color: var(--text);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    input[type="password"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.15);
+    }
+
+    .btn {
+      height: 42px;
+      padding: 0 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover { background: var(--primary-dark); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    .msg {
+      min-height: 18px;
+      margin: 10px 0 0;
+      font-size: 12.5px;
+      color: var(--danger);
+    }
+
+    .statusBar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 14px;
+      margin-bottom: 16px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      border-radius: 11px;
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .statusBar.warn {
+      background: var(--warn-bg);
+      color: var(--warn);
+      border-color: #fde68a;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      flex: none;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 15px 16px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      transition: border-color .15s;
+    }
+
+    .field + .field { margin-top: 10px; }
+    .field:hover { border-color: #cbd5e1; }
+
+    .fieldName {
+      font-size: 14.5px;
+      font-weight: 600;
+    }
+
+    .fieldDesc {
+      margin-top: 3px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .fieldCode {
+      display: inline-block;
+      margin-top: 3px;
+      font-size: 11.5px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 28px;
+      flex: none;
+    }
+
+    .switch input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .track {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #cbd5e1;
+      cursor: pointer;
+      transition: background .2s ease;
+    }
+
+    .track::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
+      transition: transform .2s ease;
+    }
+
+    .switch input:checked + .track { background: var(--primary); }
+    .switch input:checked + .track::after { transform: translateX(20px); }
+    .switch input:disabled + .track { opacity: .5; cursor: not-allowed; }
+    .switch input:focus-visible + .track { box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.25); }
+
+    .empty {
+      padding: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px;
+    }
+
+    .foot a {
+      color: var(--primary-dark);
+      text-decoration: none;
+    }
+
+    .foot a:hover { text-decoration: underline; }
+
+    .link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .link:hover { color: var(--text); }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      transform: translate(-50%, 12px);
+      padding: 10px 18px;
+      font-size: 13px;
+      color: #fff;
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .toast.err { background: rgba(220, 38, 38, 0.95); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <header class="head">
+      <div class="logo">API</div>
+      <div>
+        <h1>接口开关控制台</h1>
+        <p class="sub">wx-review-api</p>
+      </div>
+    </header>
+
+    <section id="loginView">
+      <label class="label" for="password">管理密码</label>
+      <div class="inputRow">
+        <input id="password" type="password" placeholder="请输入 ADMIN_PASSWORD"
+               autocomplete="current-password" />
+        <button id="loginBtn" class="btn primary" type="button">进入</button>
+      </div>
+      <p class="msg" id="loginMsg"></p>
+    </section>
+
+    <section id="panelView" hidden>
+      <div class="statusBar" id="storeStatus"></div>
+      <div id="fieldList"></div>
+      <footer class="foot">
+        <a id="previewLink" href="/api/review" target="_blank" rel="noopener">查看接口返回 →</a>
+        <button id="logoutBtn" class="link" type="button">退出登录</button>
+      </footer>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var STORAGE_KEY = 'wx_review_api:admin_password';
+
+      var els = {
+        loginView: document.getElementById('loginView'),
+        panelView: document.getElementById('panelView'),
+        password: document.getElementById('password'),
+        loginBtn: document.getElementById('loginBtn'),
+        loginMsg: document.getElementById('loginMsg'),
+        storeStatus: document.getElementById('storeStatus'),
+        fieldList: document.getElementById('fieldList'),
+        previewLink: document.getElementById('previewLink'),
+        logoutBtn: document.getElementById('logoutBtn'),
+        toast: document.getElementById('toast'),
+      };
+
+      var password = '';
+      var config = {};
+      var schema = {};
+      var storeReady = false;
+      var toastTimer = null;
+
+      function toast(message, type) {
+        els.toast.textContent = message;
+        els.toast.className = 'toast show' + (type === 'err' ? ' err' : '');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          els.toast.className = 'toast';
+        }, 2400);
+      }
+
+      function request(path, options) {
+        var opts = options || {};
+        return fetch(path, {
+          method: opts.method || 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + password,
+          },
+          body: opts.body,
+        }).then(function (res) {
+          return res
+            .json()
+            .catch(function () {
+              return {};
+            })
+            .then(function (body) {
+              if (!res.ok || body.code !== 0) {
+                var err = new Error(body.message || '请求失败 (' + res.status + ')');
+                err.status = res.status;
+                err.code = body.code;
+                throw err;
+              }
+              return body.data;
+            });
+        });
+      }
+
+      function showLogin(message) {
+        els.panelView.hidden = true;
+        els.loginView.hidden = false;
+        els.loginMsg.textContent = message || '';
+        els.password.focus();
+      }
+
+      function showPanel() {
+        els.loginView.hidden = true;
+        els.panelView.hidden = false;
+        els.loginMsg.textContent = '';
+      }
+
+      function renderStatus() {
+        els.storeStatus.className = 'statusBar' + (storeReady ? '' : ' warn');
+        els.storeStatus.innerHTML = '';
+
+        var dot = document.createElement('span');
+        dot.className = 'dot';
+
+        var text = document.createElement('span');
+        text.textContent = storeReady
+          ? '已连接存储，修改后立即生效，无需重新部署'
+          : '未连接 Redis 存储，当前为只读状态。请在 Vercel 添加 Upstash Redis 集成后重新部署';
+
+        els.storeStatus.appendChild(dot);
+        els.storeStatus.appendChild(text);
+      }
+
+      function renderFields() {
+        els.fieldList.innerHTML = '';
+        var keys = Object.keys(schema);
+
+        if (!keys.length) {
+          var empty = document.createElement('p');
+          empty.className = 'empty';
+          empty.textContent = '暂无可控制的字段';
+          els.fieldList.appendChild(empty);
+          return;
+        }
+
+        keys.forEach(function (key) {
+          var field = schema[key] || {};
+
+          var row = document.createElement('div');
+          row.className = 'field';
+
+          var info = document.createElement('div');
+
+          var name = document.createElement('div');
+          name.className = 'fieldName';
+          name.textContent = field.label || key;
+
+          var desc = document.createElement('div');
+          desc.className = 'fieldDesc';
+          desc.textContent = field.description || '';
+
+          var code = document.createElement('div');
+          code.className = 'fieldCode';
+          code.textContent = key + ' = ' + String(config[key]);
+
+          info.appendChild(name);
+          if (desc.textContent) info.appendChild(desc);
+          info.appendChild(code);
+
+          var wrap = document.createElement('label');
+          wrap.className = 'switch';
+
+          var input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = Boolean(config[key]);
+          input.disabled = !storeReady;
+          input.addEventListener('change', function () {
+            toggle(key, input, code);
+          });
+
+          var track = document.createElement('span');
+          track.className = 'track';
+
+          wrap.appendChild(input);
+          wrap.appendChild(track);
+          row.appendChild(info);
+          row.appendChild(wrap);
+          els.fieldList.appendChild(row);
+        });
+      }
+
+      function toggle(key, input, code) {
+        var next = input.checked;
+        input.disabled = true;
+
+        var patch = {};
+        patch[key] = next;
+
+        request('/api/config', { method: 'POST', body: JSON.stringify(patch) })
+          .then(function (data) {
+            config = data.config;
+            code.textContent = key + ' = ' + String(config[key]);
+            toast('已保存，接口即时生效');
+          })
+          .catch(function (err) {
+            input.checked = !next;
+            toast(err.message, 'err');
+            if (err.status === 401) logout(err.message);
+          })
+          .then(function () {
+            input.disabled = !storeReady;
+          });
+      }
+
+      function load() {
+        return request('/api/config')
+          .then(function (data) {
+            config = data.config || {};
+            schema = data.schema || {};
+            storeReady = Boolean(data.storeReady);
+            renderStatus();
+            renderFields();
+            showPanel();
+          })
+          .catch(function (err) {
+            storeReady = false;
+            throw err;
+          });
+      }
+
+      function login(event) {
+        if (event) event.preventDefault();
+
+        var value = els.password.value.trim();
+        if (!value) {
+          els.loginMsg.textContent = '请输入密码';
+          return;
+        }
+
+        password = value;
+        els.loginBtn.disabled = true;
+        els.loginBtn.textContent = '登录中';
+
+        load()
+          .then(function () {
+            localStorage.setItem(STORAGE_KEY, password);
+          })
+          .catch(function (err) {
+            password = '';
+            localStorage.removeItem(STORAGE_KEY);
+            showLogin(err.message);
+          })
+          .then(function () {
+            els.loginBtn.disabled = false;
+            els.loginBtn.textContent = '进入';
+          });
+      }
+
+      function logout(message) {
+        password = '';
+        localStorage.removeItem(STORAGE_KEY);
+        els.password.value = '';
+        showLogin(message || '');
+      }
+
+      els.loginBtn.addEventListener('click', login);
+      els.password.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') login(event);
+      });
+      els.logoutBtn.addEventListener('click', function () {
+        logout('');
+      });
+
+      // 自动使用上次保存的密码登录
+      var saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        password = saved;
+        els.password.value = saved;
+        els.loginBtn.disabled = true;
+        load()
+          .catch(function () {
+            password = '';
+            localStorage.removeItem(STORAGE_KEY);
+            showLogin('登录已过期，请重新输入密码');
+          })
+          .then(function () {
+            els.loginBtn.disabled = false;
+          });
+      } else {
+        showLogin('');
+      }
+    })();
+  </script>
+</body>
+</html>
