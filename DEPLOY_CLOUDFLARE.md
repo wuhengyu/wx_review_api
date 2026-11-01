@@ -25,7 +25,7 @@
 
 ## 存储后端（二选一）
 
-配置开关需要持久化存储，支持两种后端，代码自动检测：
+配置开关需要持久化存储，支持两种后端，代码自动检测。「变量和机密」与「Workers KV」的区别和分工，见 README 的[「变量和机密 vs Workers KV」](./README.md#变量和机密-vs-workers-kv为什么两个都要)一节。
 
 ### 方式 A：Cloudflare Workers KV（全 Cloudflare 原生，推荐）
 
