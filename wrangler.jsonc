@@ -1,0 +1,16 @@
+{
+  // Cloudflare Workers 配置
+  // 文档: https://developers.cloudflare.com/workers/wrangler/configuration/
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "wx-review-api",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
