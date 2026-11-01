@@ -21,11 +21,37 @@
 | 变量名 | 必填 | 说明 |
 | --- | --- | --- |
 | `ADMIN_PASSWORD` | 是 | 控制台登录密码，建议用 Secret 类型 |
-| `UPSTASH_REDIS_REST_URL` | 是 | Upstash Redis REST 地址（与 Vercel 可共用同一个库） |
-| `UPSTASH_REDIS_REST_TOKEN` | 是 | Upstash Redis 访问令牌，建议用 Secret 类型 |
 | `REVIEW_MODE` | 否 | 未连接存储时的兜底值，默认 `true` |
 
-> 存储、开关配置都存 Upstash Redis，Vercel 与 Cloudflare 共用同一组凭证时，两边的开关状态天然同步。
+## 存储后端（二选一）
+
+配置开关需要持久化存储，支持两种后端，代码自动检测：
+
+### 方式 A：Cloudflare Workers KV（全 Cloudflare 原生，推荐）
+
+1. Cloudflare 控制台 → **存储和数据库** → **KV** → **创建命名空间**（名称随意，如 `wx-review-config`）；
+2. 复制命名空间的 **ID**；
+3. 在 `wrangler.jsonc` 中加入：
+
+```jsonc
+"kv_namespaces": [
+  { "binding": "KV", "id": "<你的命名空间ID>" }
+]
+```
+
+4. 推送后自动构建部署即生效。控制台的 `storeReady` 会显示为已连接。
+
+> KV 是最终一致存储，开关变更全球同步通常只需几秒，对审核模式场景完全够用。
+> 免费额度：每天 10 万次读、1000 次写，本项目用量远低于此。
+
+### 方式 B：Upstash Redis（与 Vercel 共用同一存储）
+
+| 变量名 | 必填 | 说明 |
+| --- | --- | --- |
+| `UPSTASH_REDIS_REST_URL` | 二选一 | Upstash Redis REST 地址 |
+| `UPSTASH_REDIS_REST_TOKEN` | 二选一 | Upstash Redis 访问令牌，建议用 Secret 类型 |
+
+使用 Upstash 时，Vercel 与 Cloudflare 共用同一组凭证，两边开关状态天然同步。
 
 ## 方式一：Git 集成（Workers Builds，推荐）
 

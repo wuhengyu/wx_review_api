@@ -46,9 +46,11 @@ function applyEnv(env) {
   }
 
   for (const [key, value] of Object.entries(env || {})) {
-    // 只注入字符串变量（跳过 ASSETS 等绑定对象）
     if (typeof value === 'string') {
       globalThis.process.env[key] = value;
+    } else if (key === 'KV' && value && typeof value.get === 'function' && typeof value.put === 'function') {
+      // Workers KV 绑定 → 提供给 lib/store.js 作为存储后端
+      globalThis.WX_REVIEW_KV = value;
     }
   }
 }
