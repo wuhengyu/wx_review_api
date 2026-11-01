@@ -7,6 +7,9 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "previews": {},
+  "kv_namespaces": [
+    { "binding": "KV", "id": "522a1b26ec6f45df8b4daa1f08977e2d" }
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
