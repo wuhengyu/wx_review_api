@@ -1,6 +1,6 @@
 # wx-review-api
 
-微信小程序「审核模式」状态接口，基于 Vercel Serverless Functions，**零依赖**，附带一个可视化开关控制台。
+微信小程序「审核模式」状态接口，**零依赖**，附带一个可视化开关控制台。同一份代码支持 **Vercel Serverless Functions** 与 **Cloudflare Workers** 双平台部署。
 
 - 小程序侧调用 `/api/review` 拿到 `reviewMode`
 - 你打开 `/admin` 点一下开关，**即时生效，无需重新部署**
@@ -172,12 +172,16 @@ Vercel 上的函数跑在**多个互不通信、随时会被回收**的临时实
 ├── lib/
 │   ├── response.js    # 统一响应结构 + CORS 头封装
 │   ├── handler.js     # 路由包装器：预检、方法校验、异常捕获
-│   ├── store.js       # 配置存储层（Upstash REST API + 字段 schema）
+│   ├── store.js       # 配置存储层（Workers KV 或 Upstash REST，自动二选一）
 │   └── auth.js        # 管理密码校验
+├── worker/
+│   └── index.js       # Cloudflare Workers 适配层（入口 + 路由）
 ├── public/
 │   └── admin/
 │       └── index.html # 开关控制台（单文件，无外部依赖）
-├── vercel.json        # 路由配置
+├── vercel.json        # Vercel 路由配置
+├── wrangler.jsonc     # Cloudflare Workers 配置（KV 绑定、静态资产）
+├── DEPLOY_CLOUDFLARE.md # Cloudflare 部署文档
 ├── package.json
 └── .gitignore
 ```
@@ -331,6 +335,50 @@ node -e "require('./api/review')({method:'GET'},{setHeader(){},status(){return t
 npm i -g vercel
 vercel --prod
 ```
+
+## 部署到 Cloudflare Workers
+
+同一份代码可以直接部署到 Cloudflare Workers（Static Assets 方案）：业务逻辑 `lib/`、`api/` 与 Vercel 完全共用，`worker/index.js` 只做请求格式适配和路由分发。完整步骤见 [DEPLOY_CLOUDFLARE.md](./DEPLOY_CLOUDFLARE.md)，概要如下：
+
+1. Cloudflare 控制台 → Workers & Pages → **Create application** → 选 **GitHub**（注意是 Workers 导入，不是 Pages）；
+2. 生产分支选部署分支，项目名与 `wrangler.jsonc` 中的 `name` 一致（`wx-review-api`）；
+3. Build Command 留空，Deploy Command 填 `npx wrangler deploy`；
+4. 在 **Settings → Variables and Secrets** 添加 `ADMIN_PASSWORD`（Secret 类型）。
+
+### 变量和机密 vs Workers KV：为什么两个都要
+
+Cloudflare 面板里的「变量和机密」与「Workers KV」是两种完全不同的东西，本项目各用各的：
+
+| | 变量和机密 | Workers KV |
+| --- | --- | --- |
+| 本质 | 部署时打包进版本的配置 | 独立的在线键值数据库 |
+| 代码能做什么 | 运行时**只能读** | 运行时**可读可写** |
+| 怎么改 | 人在面板改，触发一次新版本部署 | 代码里随时 `get()` / `put()` |
+| 生效方式 | 要等一次新部署 | 全实例共享，秒级生效 |
+| 适合放 | 密码、第三方密钥等低频配置 | 会变化的业务状态 |
+
+为什么管理台的开关必须存 KV：
+
+- 你在 `/admin` 拨动开关时，是**代码在运行时写下一个新状态**，让下一次 `/api/review` 读到；
+- 变量对代码是只读的，不存在"写回"的 API——根本写不进去；
+- 就算改成人工改变量，每次切审核模式都要去面板改配置再等一次部署，做不到"即时生效"，而审核场景恰恰需要秒切；
+- KV 独立于部署版本，所有实例读写同一份数据，**点一下立即生效、无需重新部署**。
+
+本项目的分工：
+
+| 内容 | 存哪 | 原因 |
+| --- | --- | --- |
+| `ADMIN_PASSWORD` | 变量和机密（Secret） | 配置项，人来定、很少变，代码只读做鉴权 |
+| `reviewMode` 开关状态 | Workers KV | 业务数据，程序运行时反复读写 |
+
+> 如果你完全不需要管理台，能接受"每次切开关都去面板改变量并重新部署"，理论上只用变量也能跑——但那就失去了本项目"点一下即时生效"的核心价值。
+
+### Cloudflare 上的存储后端（二选一）
+
+- **Workers KV（推荐，全 Cloudflare 原生）**：在控制台「存储和数据库 → KV」创建命名空间，把 ID 填入 `wrangler.jsonc` 的 `kv_namespaces` 即可，无需任何第三方账号。KV 为最终一致存储，开关同步通常只需几秒；免费额度每天 10 万次读、1000 次写，本项目用量远低于此。
+- **Upstash Redis**：与 Vercel 共用同一组 `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`，两边读写同一个库，开关状态天然同步。
+
+两种后端代码自动检测，无需改动业务逻辑。
 
 ## 小程序调用示例
 
